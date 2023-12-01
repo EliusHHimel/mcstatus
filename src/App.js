@@ -26,11 +26,10 @@ function App() {
       {
         serverStatus?.online &&
         <div className='detailed-info'>
-          <p><img width="64" height="64" src="https://img.icons8.com/external-itim2101-flat-itim2101/64/external-gamer-blogger-and-influencer-itim2101-flat-itim2101.png" alt="external-gamer-blogger-and-influencer-itim2101-flat-itim2101" /> Players Online: {serverStatus?.players?.online}</p>
-          <p>Players Max: {serverStatus?.players?.max}</p>
-          <p>Server Version: {serverStatus?.version.name_clean}</p>
-          <p>Server Port: {serverStatus?.port}</p>
-          <p>Server MOTD: {serverStatus?.motd.clean}</p>
+          <p><img width="48" height="48" src="https://img.icons8.com/fluency/48/minecraft-pickaxe.png" alt="minecraft-pickaxe" /> Players Online: {serverStatus?.players?.online}</p>
+          <p><img width="48" height="48" src="https://img.icons8.com/stickers/48/minecraft-folder.png" alt="minecraft-folder" /> Server Version: {serverStatus?.version.name_clean}</p>
+          <p><img width="48" height="48" src="https://img.icons8.com/plasticine/100/minecraft-forge.png" alt="minecraft-forge" />Server Port: {serverStatus?.port}</p>
+          <p><img width="48" height="48" src="https://img.icons8.com/color/48/minecraft-golden-apple.png" alt="minecraft-golden-apple" /> Server MOTD: {serverStatus?.motd.clean}</p>
         </div>
       }
     </div>

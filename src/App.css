@@ -1,10 +1,15 @@
+body {
+  padding: 5px;
+  background: linear-gradient(rgba(0, 0, 0, .5), rgba(0, 0, 0, .5)), url(https://images.unsplash.com/photo-1569949381669-ecf31ae8e613?auto=format&fit=crop&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&q=80&w=2070), no-repeat;
+  background-size: cover;
+}
+
 p {
   display: flex;
   align-items: center;
   gap: 5px;
   background: url('./img/Dirt_background.webp') no-repeat;
   color: white;
-  width: fit-content;
   padding: 5px;
   border-radius: 5px;
 }
@@ -15,4 +20,10 @@ p {
   justify-content: center;
   align-self: center;
   gap: 15px;
+}
+
+.detailed-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
