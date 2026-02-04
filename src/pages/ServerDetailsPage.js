@@ -40,8 +40,27 @@ function ServerDetailsPage() {
   const resolvedIp =
     serverData?.ip_address || serverData?.ip || serverData?.host || ip;
 
+  const serverIcon =
+    serverData?.icon ||
+    serverData?.favicon ||
+    serverData?.server?.icon ||
+    serverData?.server?.favicon ||
+    null;
+
   const playersList =
     serverData?.players?.list || serverData?.players?.sample || [];
+
+  const getAvatarUrl = (player) => {
+    const uuid = player?.id || player?.uuid;
+    const name = player?.name_clean || player?.name;
+    if (uuid) {
+      return `https://mc-heads.net/avatar/${uuid}/64`;
+    }
+    if (name) {
+      return `https://mc-heads.net/avatar/${name}/64`;
+    }
+    return null;
+  };
 
   return (
     <div className="page">
@@ -75,6 +94,23 @@ function ServerDetailsPage() {
         <div className="details-grid">
           <div className="details-card">
             <h2>Server Info</h2>
+            <div className="server-hero">
+              {serverIcon ? (
+                <img
+                  className="server-icon-large"
+                  src={serverIcon}
+                  alt={`${resolvedIp} icon`}
+                />
+              ) : (
+                <div className="server-icon-placeholder">No Icon</div>
+              )}
+              <div>
+                <div className="server-hero-title">{resolvedIp}</div>
+                <div className="server-hero-subtitle">
+                  {serverData?.version?.name_clean || "Unknown version"}
+                </div>
+              </div>
+            </div>
             <p>Version: {serverData?.version?.name_clean || "Unknown"}</p>
             <p>Port: {serverData?.port ?? "N/A"}</p>
             <p>MOTD: {serverData?.motd?.clean || "N/A"}</p>
@@ -84,11 +120,33 @@ function ServerDetailsPage() {
             <h2>Players</h2>
             {playersList.length > 0 ? (
               <ul className="player-list">
-                {playersList.map((player) => (
-                  <li key={player.id || player.name || player.name_clean}>
-                    {player.name_clean || player.name || "Unknown player"}
-                  </li>
-                ))}
+                {playersList.map((player) => {
+                  const avatarUrl = getAvatarUrl(player);
+                  return (
+                    <li
+                      key={
+                        player.id ||
+                        player.uuid ||
+                        player.name ||
+                        player.name_clean
+                      }
+                      className="player-item"
+                    >
+                      {avatarUrl ? (
+                        <img
+                          className="player-avatar"
+                          src={avatarUrl}
+                          alt={player.name_clean || player.name || "Player"}
+                        />
+                      ) : (
+                        <div className="player-avatar placeholder" />
+                      )}
+                      <span className="player-name">
+                        {player.name_clean || player.name || "Unknown player"}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p>No player list available.</p>

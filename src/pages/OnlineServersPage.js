@@ -138,6 +138,13 @@ export function OnlineServersList({
   const progressPercent =
     totalToCheck > 0 ? Math.round((checkedCount / totalToCheck) * 100) : 0;
 
+  const getServerIcon = (server) =>
+    server?.icon ||
+    server?.favicon ||
+    server?.server?.icon ||
+    server?.server?.favicon ||
+    null;
+
   const filteredServers = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const normalizedVersion = versionTerm.trim().toLowerCase();
@@ -432,12 +439,24 @@ export function OnlineServersList({
         {pagedServers.map((server) => {
           const serverIp =
             server?.ip_address || server?.ip || server?.host || "Unknown IP";
+          const serverIcon = getServerIcon(server);
           return (
             <div
               className="server-card"
               key={`${serverIp}-${server?.port || ""}`}
             >
-              <div className="server-card-title">{serverIp}</div>
+              <div className="server-card-header">
+                {serverIcon ? (
+                  <img
+                    className="server-icon"
+                    src={serverIcon}
+                    alt={`${serverIp} icon`}
+                  />
+                ) : (
+                  <div className="server-icon placeholder" />
+                )}
+                <div className="server-card-title">{serverIp}</div>
+              </div>
               <div className="server-card-row">
                 Status: <span className="online">Online</span>
               </div>
