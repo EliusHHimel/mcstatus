@@ -65,7 +65,7 @@ function ServerDetailsPage() {
       return "Disabled";
     }
     return "Unknown";
-  }, [serverData]);
+  }, [serverData, queryData]);
 
   const playersList =
     queryData?.players?.list ||
