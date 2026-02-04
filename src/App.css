@@ -1,6 +1,9 @@
 body {
   padding: 5px;
-  background: linear-gradient(rgba(0, 0, 0, .5), rgba(0, 0, 0, .5)), url(https://acmi-website-media-prod.s3.ap-southeast-2.amazonaws.com/media/images/landscape-minecraft-shaders-river-wallpaper.original.jpg), no-repeat;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url(https://acmi-website-media-prod.s3.ap-southeast-2.amazonaws.com/media/images/landscape-minecraft-shaders-river-wallpaper.original.jpg),
+    no-repeat;
   background-size: cover;
   background-position: center;
 }
@@ -9,10 +12,62 @@ p {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: url('./img/Dirt_background.webp') no-repeat;
+  background: url("./img/Dirt_background.webp") no-repeat;
   color: white;
   padding: 5px;
   border-radius: 5px;
+}
+
+.App {
+  min-height: 100vh;
+  padding: 10px 20px 40px;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff;
+  margin: 20px 0 30px;
+  text-align: center;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-nav {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  padding: 16px 0 8px;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-1px);
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .status-only {
@@ -27,4 +82,142 @@ p {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
+}
+
+.panel {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  color: #fff;
+  margin-bottom: 24px;
+}
+
+.panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.panel-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+}
+
+.panel-label {
+  font-weight: 600;
+}
+
+.panel-input {
+  width: 120px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+}
+
+.panel-button {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #2ecc71;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.panel-button.secondary {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.panel-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.link-button {
+  display: inline-flex;
+  justify-content: center;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+.panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.server-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.server-card {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 14px;
+  color: #fff;
+}
+
+.server-card-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.server-card-row {
+  font-size: 0.92rem;
+  margin-bottom: 6px;
+}
+
+.online {
+  color: #2ecc71;
+  font-weight: 700;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.details-card {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 18px;
+  color: #fff;
+}
+
+.details-card h2 {
+  margin-top: 0;
+}
+
+.player-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.player-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
