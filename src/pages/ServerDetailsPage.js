@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 function ServerDetailsPage() {
   const { ip } = useParams();
   const [serverData, setServerData] = useState(null);
-  const [queryData, setQueryData] = useState(null);
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
@@ -13,16 +12,13 @@ function ServerDetailsPage() {
     const loadServer = async () => {
       setStatus("loading");
       try {
-        const [statusResponse, queryResponse] = await Promise.all([
-          fetch(`https://api.mcstatus.io/v2/status/java/${ip}`),
-          fetch(`https://api.mcstatus.io/v2/query/java/${ip}`),
-        ]);
+        const statusResponse = await fetch(
+          `https://api.mcstatus.io/v2/status/java/${ip}`,
+        );
 
         const data = await statusResponse.json();
-        const query = await queryResponse.json();
         if (!cancelled) {
           setServerData(data);
-          setQueryData(query);
           setStatus("ready");
         }
       } catch (error) {
@@ -44,38 +40,8 @@ function ServerDetailsPage() {
   const resolvedIp =
     serverData?.ip_address || serverData?.ip || serverData?.host || ip;
 
-  const whitelistStatus = useMemo(() => {
-    const whitelistValue =
-      serverData?.whitelist ??
-      serverData?.whitelisted ??
-      serverData?.server?.whitelist ??
-      serverData?.server?.whitelisted ??
-      serverData?.server?.is_whitelisted ??
-      serverData?.server?.isWhitelisted ??
-      serverData?.players?.whitelist ??
-      queryData?.whitelist ??
-      queryData?.whitelisted ??
-      queryData?.server?.whitelist ??
-      queryData?.server?.whitelisted ??
-      queryData?.server?.is_whitelisted ??
-      queryData?.server?.isWhitelisted ??
-      queryData?.players?.whitelist;
-
-    if (whitelistValue === true) {
-      return "Enabled";
-    }
-    if (whitelistValue === false) {
-      return "Disabled";
-    }
-    return "Unknown";
-  }, [serverData, queryData]);
-
   const playersList =
-    queryData?.players?.list ||
-    queryData?.players?.sample ||
-    serverData?.players?.list ||
-    serverData?.players?.sample ||
-    [];
+    serverData?.players?.list || serverData?.players?.sample || [];
 
   return (
     <div className="page">
@@ -90,7 +56,6 @@ function ServerDetailsPage() {
         <div className="panel-meta">
           <span>Server IP: {resolvedIp}</span>
           <span>Status: {serverData?.online ? "Online" : "Offline"}</span>
-          <span>Whitelist: {whitelistStatus}</span>
           <span>
             Players: {serverData?.players?.online ?? 0}/
             {serverData?.players?.max ?? 0}
