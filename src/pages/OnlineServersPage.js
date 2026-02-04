@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import localServers from "../servers.json";
 
-const DEFAULT_LIMIT = 100;
 const MAX_CONCURRENCY = 10;
+const DEFAULT_PAGE_SIZE = 24;
 
-function OnlineServersPage() {
+export function OnlineServersList({
+  showTitle = true,
+  title = "Online Servers",
+}) {
   const [serverList, setServerList] = useState([]);
   const [listSource, setListSource] = useState("loading");
-  const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [scanning, setScanning] = useState(false);
   const [checkedCount, setCheckedCount] = useState(0);
   const [onlineServers, setOnlineServers] = useState([]);
@@ -19,7 +21,10 @@ function OnlineServersPage() {
   const [maxPlayers, setMaxPlayers] = useState(0);
   const [hideEmpty, setHideEmpty] = useState(false);
   const [sortBy, setSortBy] = useState("players-desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const cancelRef = useRef(false);
+  const autoScanRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,61 +59,81 @@ function OnlineServersPage() {
     return serverList.map((item) => item?.ip).filter(Boolean);
   }, [serverList]);
 
-  const totalToCheck = Math.min(limit, ipList.length);
+  const totalToCheck = ipList.length;
 
-  const startScan = async () => {
-    if (scanning || totalToCheck === 0) {
-      return;
-    }
-
-    cancelRef.current = false;
-    setScanning(true);
-    setCheckedCount(0);
-    setOnlineServers([]);
-
-    const targets = ipList.slice(0, totalToCheck);
-    let index = 0;
-    const onlineResults = [];
-
-    const worker = async () => {
-      while (index < targets.length && !cancelRef.current) {
-        const ip = targets[index];
-        index += 1;
-        try {
-          const response = await fetch(
-            `https://api.mcstatus.io/v2/status/java/${ip}`,
-          );
-          const data = await response.json();
-          if (data?.online) {
-            onlineResults.push(data);
-          }
-        } catch (error) {
-          // Ignore failed requests and continue.
-        } finally {
-          setCheckedCount((prev) => prev + 1);
-        }
+  const startScan = useCallback(
+    async (resetResults = true) => {
+      if (scanning || totalToCheck === 0) {
+        return;
       }
-    };
 
-    const workers = Array.from(
-      { length: Math.min(MAX_CONCURRENCY, targets.length) },
-      worker,
-    );
-    await Promise.all(workers);
+      cancelRef.current = false;
+      setScanning(true);
+      setCheckedCount(0);
+      if (resetResults) {
+        setOnlineServers([]);
+      }
 
-    if (!cancelRef.current) {
-      onlineResults.sort(
-        (a, b) => (b?.players?.online || 0) - (a?.players?.online || 0),
+      const targets = ipList;
+      let index = 0;
+
+      const worker = async () => {
+        while (index < targets.length && !cancelRef.current) {
+          const ip = targets[index];
+          index += 1;
+          try {
+            const response = await fetch(
+              `https://api.mcstatus.io/v2/status/java/${ip}`,
+            );
+            const data = await response.json();
+            if (data?.online) {
+              const resolvedIp = data?.ip_address || data?.ip || ip;
+              const normalized = { ...data, ip_address: resolvedIp };
+              setOnlineServers((prev) => {
+                const existingIndex = prev.findIndex(
+                  (item) =>
+                    (item?.ip_address || item?.ip || item?.host) === resolvedIp,
+                );
+                if (existingIndex === -1) {
+                  return [...prev, normalized];
+                }
+                const updated = [...prev];
+                updated[existingIndex] = normalized;
+                return updated;
+              });
+            }
+          } catch (error) {
+            // Ignore failed requests and continue.
+          } finally {
+            setCheckedCount((prev) => prev + 1);
+          }
+        }
+      };
+
+      const workers = Array.from(
+        { length: Math.min(MAX_CONCURRENCY, targets.length) },
+        () => worker(),
       );
-      setOnlineServers(onlineResults);
-    }
-    setScanning(false);
-  };
+      await Promise.all(workers);
+
+      if (!cancelRef.current) {
+        setScanning(false);
+      }
+    },
+    [ipList, scanning, totalToCheck],
+  );
 
   const stopScan = () => {
     cancelRef.current = true;
     setScanning(false);
   };
+
+  useEffect(() => {
+    if (!autoScanRef.current && ipList.length > 0) {
+      autoScanRef.current = true;
+      startScan(true);
+    }
+  }, [ipList, startScan]);
 
   const progressPercent =
     totalToCheck > 0 ? Math.round((checkedCount / totalToCheck) * 100) : 0;
@@ -119,7 +144,7 @@ function OnlineServersPage() {
     const normalizedMotd = motdTerm.trim().toLowerCase();
 
     const filtered = onlineServers.filter((server) => {
-      const ip = server?.ip_address || "";
+      const ip = (server?.ip_address || server?.ip || "").toString();
       const version = server?.version?.name_clean || "";
       const motd = server?.motd?.clean || "";
       const playersOnline = server?.players?.online ?? 0;
@@ -162,12 +187,16 @@ function OnlineServersPage() {
         break;
       case "ip-asc":
         filtered.sort((a, b) =>
-          (a?.ip_address || "").localeCompare(b?.ip_address || ""),
+          (a?.ip_address || a?.ip || "").localeCompare(
+            b?.ip_address || b?.ip || "",
+          ),
         );
         break;
       case "ip-desc":
         filtered.sort((a, b) =>
-          (b?.ip_address || "").localeCompare(a?.ip_address || ""),
+          (b?.ip_address || b?.ip || "").localeCompare(
+            a?.ip_address || a?.ip || "",
+          ),
         );
         break;
       case "players-desc":
@@ -190,30 +219,47 @@ function OnlineServersPage() {
     versionTerm,
   ]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredServers.length / pageSize));
+  const pagedServers = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredServers.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, filteredServers, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    hideEmpty,
+    maxPlayers,
+    minPlayers,
+    motdTerm,
+    searchTerm,
+    sortBy,
+    versionTerm,
+    pageSize,
+  ]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   return (
-    <div className="page">
-      <h1 className="page-title">Online Servers</h1>
+    <>
+      {showTitle && <h1 className="page-title">{title}</h1>}
 
       <div className="panel">
         <div className="panel-row">
-          <label className="panel-label" htmlFor="limit">
-            Servers to check
-          </label>
-          <input
-            id="limit"
-            className="panel-input"
-            type="number"
-            min="1"
-            max={ipList.length}
-            value={limit}
-            onChange={(event) => setLimit(Number(event.target.value) || 1)}
-          />
           <button
             className="panel-button"
-            onClick={startScan}
+            onClick={() => startScan(true)}
             disabled={scanning || totalToCheck === 0}
           >
-            {scanning ? "Scanning..." : "Start scan"}
+            {scanning
+              ? "Scanning..."
+              : onlineServers.length > 0
+                ? "Rescan"
+                : "Start scan"}
           </button>
           <button
             className="panel-button secondary"
@@ -231,6 +277,7 @@ function OnlineServersPage() {
             Checked: {checkedCount}/{totalToCheck}
           </span>
           <span>Progress: {progressPercent}%</span>
+          <span>Online found: {onlineServers.length}</span>
         </div>
       </div>
 
@@ -323,38 +370,107 @@ function OnlineServersPage() {
         </div>
       </div>
 
+      <div className="pagination">
+        <button
+          className="panel-button secondary"
+          onClick={() => setCurrentPage(1)}
+          disabled={currentPage === 1}
+        >
+          First
+        </button>
+        <button
+          className="panel-button secondary"
+          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          className="panel-button secondary"
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+          }
+          disabled={currentPage >= totalPages}
+        >
+          Next
+        </button>
+        <button
+          className="panel-button secondary"
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={currentPage >= totalPages}
+        >
+          Last
+        </button>
+        <label className="panel-label" htmlFor="pageSize">
+          Page size
+        </label>
+        <select
+          id="pageSize"
+          className="panel-input"
+          value={pageSize}
+          onChange={(event) => setPageSize(Number(event.target.value) || 24)}
+        >
+          <option value={12}>12</option>
+          <option value={24}>24</option>
+          <option value={48}>48</option>
+          <option value={96}>96</option>
+        </select>
+      </div>
+
       <div className="server-grid">
-        {filteredServers.length === 0 && !scanning && (
+        {filteredServers.length === 0 && (
           <div className="empty-state">
-            No online servers found yet. Start a scan to populate the list.
+            {scanning
+              ? "Scanning IPs. Online servers will appear here as they are found."
+              : "No online servers found yet. Start a scan to populate the list."}
           </div>
         )}
 
-        {filteredServers.map((server) => (
-          <div className="server-card" key={server.ip_address}>
-            <div className="server-card-title">{server.ip_address}</div>
-            <div className="server-card-row">
-              Status: <span className="online">Online</span>
-            </div>
-            <div className="server-card-row">
-              Players: {server?.players?.online ?? 0}/
-              {server?.players?.max ?? 0}
-            </div>
-            <div className="server-card-row">
-              Version: {server?.version?.name_clean || "Unknown"}
-            </div>
-            <div className="server-card-row">
-              MOTD: {server?.motd?.clean || "N/A"}
-            </div>
-            <Link
-              className="panel-button link-button"
-              to={`/server/${server.ip_address}`}
+        {pagedServers.map((server) => {
+          const serverIp =
+            server?.ip_address || server?.ip || server?.host || "Unknown IP";
+          return (
+            <div
+              className="server-card"
+              key={`${serverIp}-${server?.port || ""}`}
             >
-              View details
-            </Link>
-          </div>
-        ))}
+              <div className="server-card-title">{serverIp}</div>
+              <div className="server-card-row">
+                Status: <span className="online">Online</span>
+              </div>
+              <div className="server-card-row">
+                Players: {server?.players?.online ?? 0}/
+                {server?.players?.max ?? 0}
+              </div>
+              <div className="server-card-row">
+                Version: {server?.version?.name_clean || "Unknown"}
+              </div>
+              <div className="server-card-row">
+                MOTD: {server?.motd?.clean || "N/A"}
+              </div>
+              {serverIp !== "Unknown IP" && (
+                <Link
+                  className="panel-button link-button"
+                  to={`/server/${serverIp}`}
+                >
+                  View details
+                </Link>
+              )}
+            </div>
+          );
+        })}
       </div>
+    </>
+  );
+}
+
+function OnlineServersPage() {
+  return (
+    <div className="page">
+      <OnlineServersList showTitle title="Online Servers" />
     </div>
   );
 }

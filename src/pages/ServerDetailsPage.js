@@ -41,6 +41,9 @@ function ServerDetailsPage() {
     };
   }, [ip]);
 
+  const resolvedIp =
+    serverData?.ip_address || serverData?.ip || serverData?.host || ip;
+
   const whitelistStatus = useMemo(() => {
     const whitelistValue =
       serverData?.whitelist ??
@@ -85,7 +88,7 @@ function ServerDetailsPage() {
 
       <div className="panel">
         <div className="panel-meta">
-          <span>Server IP: {ip}</span>
+          <span>Server IP: {resolvedIp}</span>
           <span>Status: {serverData?.online ? "Online" : "Offline"}</span>
           <span>Whitelist: {whitelistStatus}</span>
           <span>

@@ -155,6 +155,19 @@ p {
   opacity: 0.9;
 }
 
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  color: #fff;
+}
+
+.pagination span {
+  font-weight: 600;
+}
+
 .server-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
